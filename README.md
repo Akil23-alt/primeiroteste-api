@@ -1,113 +1,75 @@
-Guia Prático para Construir uma API de Estatísticas Básicas
-1. O que é uma API?
-Imagine que você está em um restaurante. Você (seu aplicativo) não vai direto à cozinha para pegar a comida (os dados). Você conversa com um garçom (a API), que leva o seu pedido ao cozinheiro (o sistema) e traz a comida de volta para você.
-Uma API (Interface de Programação de Aplicações) é exatamente esse garçom: uma ponte que permite que dois sistemas de software conversem entre si de forma organizada e padronizada.
-2. Por que usar bibliotecas matemáticas em uma API?
-Ao criar uma API que lida com cálculos, como a nossa, usar bibliotecas prontas é uma ótima prática. Elas:
-Garantem precisão: Evitam que você cometa erros ao programar fórmulas complexas do zero.
-Aumentam a produtividade: Com funções prontas, como math.mean(), você escreve menos código.
-Facilitam a manutenção: O código se torna mais claro e fácil de entender, pois usa nomes de funções confiáveis.
-No nosso projeto, usamos a biblioteca mathjs para fazer os cálculos de média, máximo e mínimo.
-3. Estrutura da nossa API
-Nossa API foi construída com Node.js e Express, seguindo uma estrutura modular para organizar o código.
-app.js: O arquivo principal. Ele inicia o servidor, define a porta e “conecta” as rotas da nossa API.
-JavaScript
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
+1. O que é uma API
+Imagina que a gente está em um restaurante. A gente (o seu app ou site) quer um prato, mas não vai direto na cozinha (o servidor) fazer a comida. A gente fala com o garçom (a API). A gente faz o pedido, o garçom leva pra cozinha e volta com a nossa comida (os dados).
 
-const mathRoutes = require('./routes/mathRoutes');
+API é tipo um garçom super educado: ele é a ponte que deixa o nosso código pedir coisas para outro código, de um jeito fácil e organizado.
 
-app.use(express.json());
-app.use('/calcular', mathRoutes);
+2. Por que usar bibliotecas prontas
+Quando a gente precisa fazer contas de matemática, tipo calcular a média, a gente não vai reinventar a roda. A gente usa uma biblioteca matemática pronta! É tipo usar a calculadora em vez de fazer a conta no papel.
 
-app.listen(port, () => {
-    console.log(`API aberto na porta ${port}!`)
-})
+No projeto, usamos a biblioteca mathjs. Por que ela é top?
 
+A gente não erra: As fórmulas já estão testadas e super confiáveis.
 
-mathRoutes.js: Define os caminhos (endpoints) da nossa API. Aqui, dizemos que a rota / (que na verdade será /calcular) vai passar por uma validação antes de ir para o controlador.
-JavaScript
-const express = require('express');
-const router = express.Router();
+A gente é mais rápido: Em vez de escrever um monte de código pra calcular a média, a gente só escreve math.mean(numeros). Pronto, já calculou!
 
-const validateNumbers = require('../middlewares/validateNumbers');
-const mathController = require('../controllers/mathController')
+O código fica mais limpo: Fica fácil de ler e entender, tipo uma receita de bolo.
 
-router.post('/', validateNumbers, mathController.calculateStats);
+3. A Estrutura do nosso Projeto
+Nosso código é dividido em arquivos, cada um com uma função. Isso ajuda a gente a não se perder!
 
-module.exports = router;
+app.js: Esse é o "chefe" do projeto. Ele liga o servidor e diz "ó, galera, o restaurante tá aberto na porta tal!". Ele também fala pro garçom (as rotas) onde as coisas estão.
 
+mathRoutes.js: Pensa nisso como o mapa do restaurante. Ele mostra o caminho para a cozinha. No nosso caso, ele diz que quando alguém pedir algo em /calcular, é pra chamar o nosso "segurança" (validateNumbers) e depois a "cozinheira" (mathController).
 
-validateNumbers.js: Este é um middleware de validação. Ele é executado antes do cálculo para garantir que os dados enviados estão no formato correto. Se os dados estiverem errados, ele retorna um erro sem nem chegar no controlador.
-JavaScript
-module.exports = (req, res, next) => {
-    const numeros = req.body.numeros;
+validateNumbers.js: Esse é o nosso "segurança" ou "check-in". Antes de o pedido (os dados) chegar na cozinha, ele verifica se está tudo em ordem. Ele confere se a gente mandou uma lista de números e se todos os itens da lista são realmente números. Se tiver algo errado, ele já barra a gente e dá um aviso.
 
-    if (!Array.isArray(numeros) || numeros.length === 0) {
-        return res.status(400).json({ erro: 'Envie um Array valido no campo de "numeros".' });
-    }
-    if (!numeros.every(n => typeof n === 'number')) {
-        return res.status(400).json({ erro: 'Todos os elementos do array devem ser numeros' })
-    }
-    next();
-};
+mathController.js: A nossa "cozinheira" oficial! Depois que o segurança libera o pedido, ela entra em ação. Ela pega a lista de números, usa a nossa biblioteca mathjs para calcular a média, o valor mais alto e o mais baixo, e devolve o resultado bonitinho.
 
+numberModel.js: Por enquanto, esse arquivo é só um rascunho. Ele seria usado se a gente quisesse salvar esses números em um banco de dados, tipo uma agenda de contatos. Por agora, a gente só precisa saber que ele existe, mas não vamos usar.
 
-mathController.js: O coração da nossa lógica de negócio. Ele recebe os dados já validados, usa a biblioteca mathjs para calcular a média, máximo e mínimo, e retorna a resposta formatada em JSON.
-JavaScript
-const math = require('mathjs');
+4. Como Usar a Nossa API
+A gente vai usar um "endereço" e um "pedido" pra falar com a API:
 
-exports.calculateStats = (req, res) => {
-    const numeros = req.body.numeros;
-    try {
-        const media = math.mean(numeros);
-        const maximo = math.max(numeros);
-        const minimo = math.min(numeros);
+Método: POST (é tipo enviar um formulário para o servidor).
 
-        return res.json({ media, maximo, minimo });
-    }
-        catch (error) {
-        console.error(error);
-        return res.status(500).json({ erro: 'Error ao calcular os valores.' });
-    }
-};
+Endereço: http://localhost:3000/calcular
 
+O que a gente manda (no "corpo" do pedido): A gente tem que enviar uma lista de números, assim:
 
-numberModel.js: Um arquivo modelo, preparado para ser usado no futuro caso a API precise se conectar a um banco de dados, mas não está sendo usado no momento.
-4. O Endpoint de Cálculo
-Este é o endpoint principal da nossa API, onde você envia um array de números para obter as estatísticas.
-Método: POST
-URL: http://localhost:3000/calcular
-Body (JSON):
-Você deve enviar um array de números, seguindo a estrutura abaixo:
 JSON
+
 {
   "numeros": [10, 20, 30, 40, 50]
 }
+O que a gente recebe (a resposta): Se tudo der certo, ela vai devolver isso aqui:
 
-
-Resposta Esperada (JSON):
-A API retornará a média, o valor máximo e o mínimo do array que você enviou.
 JSON
+
 {
   "media": 30,
   "maximo": 50,
   "minimo": 10
 }
+5. Dicas do Chef (Boas Práticas)
+Nossa API foi feita seguindo regras de ouro para ser profissional e fácil de usar:
 
+Endereços claros: A gente não usou http://.../rota1, mas sim /calcular, que diz exatamente o que a rota faz.
 
-5. Validação e Boas Práticas
-Nossa API segue boas práticas para ser profissional:
-URLs claras: Usamos /calcular para indicar o que a rota faz.
-Métodos corretos: Usamos POST para enviar dados e criar uma resposta, em vez de GET.
-Status codes: Retornamos 200 OK para sucesso e 400 Bad Request se os dados enviados estiverem errados, graças ao nosso middleware validateNumbers.js.
-Validação: A validação é feita de forma antecipada no middleware para garantir que a lógica de cálculo só seja executada com dados válidos.
-6. Como testar a API com o Postman
-Para testar a nossa API de forma simples:
-Abra o Postman e crie uma nova requisição.
-Configure o método para POST.
-No campo de URL, digite http://localhost:3000/calcular.
-Vá para a aba Body, selecione a opção raw e escolha o tipo JSON no menu dropdown.
-No campo de texto, cole o exemplo de Body (JSON) da seção 4.
-Clique em Send e observe a resposta na seção debaixo.
+Validação antecipada: A gente usa o validateNumbers.js antes de tudo pra não sobrecarregar o nosso servidor com pedidos errados. É como ter um porteiro na entrada do restaurante!
+
+Códigos de resposta: A gente responde com 200 quando dá tudo certo, e 400 quando a gente erra no pedido. Isso ajuda a gente (e o nosso código) a saber o que aconteceu.
+
+6. Postman: O nosso Melhor Amigo para Testar
+Para testar a API, a gente não precisa de um site. A gente usa o Postman!
+
+Abre o Postman e clica em "New".
+
+Muda o método para POST.
+
+No campo de URL, cola o nosso endereço: http://localhost:3000/calcular.
+
+Vai na aba Body, escolhe raw e depois JSON no menu.
+
+Cola o nosso "pedido" (o JSON com os números).
+
+Clica em Send e veja a mágica acontecer!
